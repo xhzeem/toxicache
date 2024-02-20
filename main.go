@@ -138,7 +138,7 @@ func main() {
 	close(headerChecks)
 	<-done
 
-	fmt.Printf("\n▶ Number of Reflections Found: " + colorize("%v", "80"), REFLECT)
+	fmt.Printf("\n▶ Number of Reflections Found: " + colorize("%v", "80") + "\n", REFLECT)
 
 }
 
@@ -163,10 +163,10 @@ _____  ___   _     _   ___    __    ___   _     ____
 var transport = &http.Transport{
 	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	
-//	Proxy: http.ProxyURL(&url.URL{
-//        Scheme: "http", 
-//        Host:   "127.0.0.1:8080",
-//    }),
+	Proxy: http.ProxyURL(&url.URL{
+        Scheme: "http", 
+        Host:   "127.0.0.1:8080",
+    }),
 
 	DialContext: (&net.Dialer{
 		Timeout:   30 * time.Second,
@@ -234,7 +234,7 @@ func checkHeaderReflected(targetURL string, headers http.Header, checkValue stri
 func toxicParam(targetURL string) (string, error) {
 	rand.Seed(time.Now().UnixNano())
 
-	// Generate a random number between 0 and 999
+	// Generate a random number between 0 and 9999
 	randomValue := rand.Intn(9999)
 
 	// Parse the target URL
