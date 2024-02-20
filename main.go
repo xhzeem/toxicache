@@ -163,10 +163,10 @@ _____  ___   _     _   ___    __    ___   _     ____
 var transport = &http.Transport{
 	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	
-	Proxy: http.ProxyURL(&url.URL{
-        Scheme: "http", 
-        Host:   "127.0.0.1:8080",
-    }),
+//	Proxy: http.ProxyURL(&url.URL{
+//        Scheme: "http", 
+//        Host:   "127.0.0.1:8080",
+//    }),
 
 	DialContext: (&net.Dialer{
 		Timeout:   30 * time.Second,
