@@ -91,7 +91,7 @@ func main() {
 
 		REFLECT++
 
-		fmt.Printf("\n"+colorize("Header reflected: [%v]", "11"), formatHeaders(c.header))
+		fmt.Printf("\n"+colorize("Headers reflected: [%v]", "11"), formatHeaders(c.header))
 		fmt.Printf("\n"+c.url+"\n")
 
 		if _, err := fmt.Fprintf(OutFile, "Header reflected in response: %v @ %s\n", formatHeaders(c.header), c.url); err != nil {
@@ -148,11 +148,11 @@ func colorize(text, color string) string {
 
 func printBanner() {
 	bannerFormat := `
-_____  ___   _     _   ___    __    ___   _     ____ 
+_____  ___  __     _   ___    __    ___   _     ____ 
  | |  / / \ \ \_/ | | / / %s  / /\  / / %s | |_| | |_  
  |_|  \_\_/ /_/ \ |_| \_\_, /_/--\ \_\_, |_| | |_|__ 
 
-				      @xhzeem | v0.1				
+				      @xhzeem | v0.2				
 `
 	banner := colorize(fmt.Sprintf(bannerFormat, "`","`"), "204")
 
@@ -163,10 +163,10 @@ _____  ___   _     _   ___    __    ___   _     ____
 var transport = &http.Transport{
 	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	
-	// Proxy: http.ProxyURL(&url.URL{
- //        Scheme: "http", 
- //        Host:   "127.0.0.1:8080",
- //    }),
+	Proxy: http.ProxyURL(&url.URL{
+        Scheme: "http", 
+        Host:   "127.0.0.1:8080",
+    }),
 
 	DialContext: (&net.Dialer{
 		Timeout:   30 * time.Second,
@@ -206,6 +206,11 @@ func checkHeaderReflected(targetURL string, headers http.Header, checkValue stri
 		return false, err
 	}
 	defer resp.Body.Close()
+
+	// Check if the response has a cache header in this list
+	if !hasCacheHeader(resp) {
+		return false, nil // Early return if no cache header is found
+	}
 
 	// Check response headers for reflection
 	for _, headerValues := range resp.Header {
@@ -252,6 +257,22 @@ func toxicParam(targetURL string) (string, error) {
 	modifiedURL := parsedURL.String()
 
 	return modifiedURL, nil
+}
+
+func hasCacheHeader(resp *http.Response) bool {
+    cacheHeaders := []string{
+        "x-cache", "cf-cache-status", "x-drupal-cache", "x-varnish-cache", "akamai-cache-status",
+        "server-timing", "x-iinfo", "x-nc", "x-hs-cf-cache-status", "x-proxy-cache",
+        "x-cache-hits", "x-cache-status", "x-cache-info", "x-rack-cache", "cdn_cache_status",
+        "x-akamai-cache", "x-akamai-cache-remote", "x-cache-remote",
+    }
+
+    for _, header := range cacheHeaders {
+        if _, ok := resp.Header[http.CanonicalHeaderKey(header)]; ok {
+            return true
+        }
+    }
+    return false
 }
 
 func formatHeaders(headers map[string][]string) string {
