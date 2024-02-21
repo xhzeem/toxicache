@@ -20,6 +20,7 @@ import (
 // THREADS represents the number of goroutines to be spawned for concurrent processing.
 var THREADS int 
 var REFLECT int = 0
+var userAgent string
 
 type headerCheck struct {
 	url    string
@@ -40,6 +41,9 @@ func main() {
 	
 	outputFile := "/tmp/toxicache-" + time.Now().Format("2006-01-02_15-04-05") + ".txt"
 	flag.StringVar(&outputFile, "o", outputFile, "Output File Location")
+	
+	userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+	flag.StringVar(&userAgent, "ua", userAgent, "User Agent Header")
 	
 	THREADS = runtime.NumCPU() * 5
 	flag.IntVar(&THREADS, "t", THREADS, "Number of Threads")
@@ -94,7 +98,7 @@ func main() {
 		fmt.Printf("\n"+colorize("Headers reflected: [%v]", "11"), formatHeaders(c.header))
 		fmt.Printf("\n"+c.url+"\n")
 
-		if _, err := fmt.Fprintf(OutFile, "Header reflected in response: %v @ %s\n", formatHeaders(c.header), c.url); err != nil {
+		if _, err := fmt.Fprintf(OutFile, "Headers reflected: %v @ %s\n", formatHeaders(c.header), c.url); err != nil {
 			fmt.Fprintf(os.Stderr, "Error writing to file: %v\n", err)
 		}
 	})
@@ -103,18 +107,18 @@ func main() {
 	headersToCheck := []headerCheck{
 		{header: http.Header{"X-Forwarded-Host": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"X-Forwarded-For": []string{"xhzeem.me"}}, check: "xhzeem.me"},
-		{header: http.Header{"X-Amz-Website-Redirect-Location": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"X-Rewrite-Url": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"X-Host": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"User-Agent": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"Handle": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"H0st": []string{"xhzeem.me"}}, check: "xhzeem.me"},
-		{header: http.Header{"Origin": []string{"xhzeemx.me"}}, check: "xhzeem.me"},
+		{header: http.Header{"Origin": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"Transfer-Encoding": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"X-Original-Url": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"X-Original-Host": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"X-Forwarded-Prefix": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"X-Amz-Server-Side-Encryption": []string{"xhzeem.me"}}, check: "xhzeem.me"},
+		{header: http.Header{"X-Amz-Website-Redirect-Location": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"Trailer": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"Fastly-Ssl": []string{"xhzeem.me"}}, check: "xhzeem.me"},
 		{header: http.Header{"Fastly-Host": []string{"xhzeem.me"}}, check: "xhzeem.me"},
@@ -163,10 +167,10 @@ _____  ___  __     _   ___    __    ___   _     ____
 var transport = &http.Transport{
 	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	
-	Proxy: http.ProxyURL(&url.URL{
-        Scheme: "http", 
-        Host:   "127.0.0.1:8080",
-    }),
+	// Proxy: http.ProxyURL(&url.URL{
+    //     Scheme: "http", 
+    //     Host:   "127.0.0.1:8080",
+    // }),
 
 	DialContext: (&net.Dialer{
 		Timeout:   30 * time.Second,
@@ -193,7 +197,7 @@ func checkHeaderReflected(targetURL string, headers http.Header, checkValue stri
 		return false, err
 	}
 
-	req.Header.Add("User-Agent", "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.100 Safari/537.36")
+	req.Header.Set("User-Agent", userAgent)
 
 	for key, values := range headers {
 		for _, value := range values {
